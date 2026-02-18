@@ -2,20 +2,22 @@
 
 namespace App\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SendPasswordOtp extends Notification
+class ContactReplyNotification extends Notification
 {
 
-    private $otp;
+    private $reply;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($otp)
+    public function __construct($reply)
     {
-        $this->otp = $otp;
+        $this->reply = $reply;
     }
 
     /**
@@ -34,19 +36,16 @@ class SendPasswordOtp extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Password Reset OTP')
-            ->view('emails.otp-template', [
-                'otp' => $this->otp,
+            ->subject('Lake Norman Labs - Reply to Your Contact Message')
+            ->view('emails.contact-reply', [
+                'reply' => $this->reply,
                 'user' => $notifiable,
             ]);
-            // ->subject('Your Password Reset OTP')
-            // ->line('You have requested a password reset.')
-            // ->line('Your OTP (One-Time Password) is:')
-            // ->line('**' . $this->otp . '**')
-            // ->line('This OTP will expire in 5 minutes.')
-            // ->line('If you did not request this, please ignore this email.')
-            // ->action('Reset Password', url('/password-reset'))
-            // ->salutation('Best regards');
+        // ->line('You have received a reply to your contact message.')
+        // ->line('Subject: ' . $this->reply->subject)
+        // ->line('Description: ' . $this->reply->description)
+        // ->action('View Contact', url('/contacts/' . $this->reply->contact_id))
+        // ->line('Thank you for using our application!');
     }
 
     /**
