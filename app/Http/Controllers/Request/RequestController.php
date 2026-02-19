@@ -1,26 +1,26 @@
 <?php
 
-namespace App\Http\Controllers\Contact;
+namespace App\Http\Controllers\Request;
 
 use App\Http\Controllers\Controller;
-use App\Models\Contact\Contact;
-use App\Models\Contact\ContactReply;
-use App\Notifications\ContactReplyNotification;
-use App\Traits\CommonTrait;
+use App\Models\Request\Request as ModelsRequest;
 use Illuminate\Http\Request;
+use App\Models\Request\RequestReply;
+use App\Notifications\RequestReplyNotification;
 use Illuminate\Support\Facades\Notification;
+use App\Traits\CommonTrait;
 
-class ContactController extends Controller
+class RequestController extends Controller
 {
     use CommonTrait;
 
     public function index()
     {
         try {
-            $contacts = Contact::latest()->get();
-            return $this->sendResponse($contacts, 'Contacts retrieved successfully.');
+            $contacts = ModelsRequest::latest()->get();
+            return $this->sendResponse($contacts, 'Requests retrieved successfully.');
         } catch (\Exception $e) {
-            return $this->sendError('Failed to retrieve contacts.', ['error' => $e->getMessage()]);
+            return $this->sendError('Failed to retrieve requests.', ['error' => $e->getMessage()]);
         }
     }
 
@@ -36,7 +36,7 @@ class ContactController extends Controller
                 'message' => 'required|string',
             ]);
 
-            $contact = new Contact();
+            $contact = new ModelsRequest();
             $contact->name = $request->name;
             $contact->email = $request->email;
             $contact->organization = $request->organization;
@@ -53,7 +53,7 @@ class ContactController extends Controller
     public function show($id)
     {
         try {
-            $contact = Contact::find($id);
+            $contact = ModelsRequest::find($id);
 
             if (!$contact) {
                 return $this->sendError('Contact not found.');
@@ -88,7 +88,7 @@ class ContactController extends Controller
 
     public function destroy($id)
     {
-        $contact = Contact::find($id);
+        $contact = ModelsRequest::find($id);
 
         if (!$contact) {
             return $this->sendError('Contact not found.');
@@ -102,10 +102,11 @@ class ContactController extends Controller
     public function reply(Request $request, $id)
     {
         try {
-            $contact = Contact::find($id);
+            $model_request = ModelsRequest::find($id);
+            // dd($request);
 
-            if (!$contact) {
-                return $this->sendError('Contact not found.');
+            if (!$model_request) {
+                return $this->sendError('Request not found.');
             }
 
             $request->validate([
@@ -113,16 +114,16 @@ class ContactController extends Controller
                 'description' => 'required|string',
             ]);
 
-            $reply = new ContactReply();
-            $reply->contact_id = $contact->id;
+            $reply = new RequestReply();
+            $reply->request_id = $model_request->id;
             $reply->subject = $request->subject;
             $reply->description = $request->description;
             $reply->save();
 
-            $reply->user_name = $contact->name;
+            $reply->user_name = $model_request->name;
             // Send notification email to the contact's email address
-            Notification::route('mail', $contact->email)
-                ->notify(new ContactReplyNotification($reply));
+            Notification::route('mail', $model_request->email)
+                ->notify(new RequestReplyNotification($reply));
 
             return $this->sendResponse($reply, 'Reply sent successfully.');
         } catch (\Exception $e) {

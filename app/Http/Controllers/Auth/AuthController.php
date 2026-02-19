@@ -26,6 +26,16 @@ class AuthController extends Controller
         }
     }
 
+    public function getAllUsers()
+    {
+        try {
+            $users = User::with('profileInfo')->get();
+            return $this->sendResponse($users, 'Users retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
     public function register(Request $request)
     {
         // dd($request->all());

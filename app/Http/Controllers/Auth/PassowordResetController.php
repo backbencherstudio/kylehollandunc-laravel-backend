@@ -120,4 +120,12 @@ class PassowordResetController extends Controller
             return $this->sendError('Failed to reset password.', ['error' => $e->getMessage()], 500);
         }
     }
+
+    public function adminPassReset() {
+        $validate = Validator::make(request()->all(), [
+            'password' => 'required|string|min:8',
+            'new_password' => 'required|string|min:8',
+            'confirm_password' => 'required|string|min:8|same:new_password',
+        ]);
+    }
 }
