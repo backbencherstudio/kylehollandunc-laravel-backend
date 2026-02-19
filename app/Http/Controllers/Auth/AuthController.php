@@ -19,6 +19,7 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
+            $user->load('profileInfo');
             return $this->sendResponse($user, 'User retrieved successfully');
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);

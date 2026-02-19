@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PassowordResetController;
 use App\Http\Controllers\Contact\ContactController;
+use App\Http\Controllers\ProfileSetting\ProfileSettingController;
 use App\Http\Controllers\Setting\SettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,4 +32,8 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:admin'], function () {
     // Settings
     Route::get('/settings', [SettingController::class, 'index']);
     Route::post('/settings/notifications', [SettingController::class, 'updateNotification']);
+
+    // Profile Settings
+    Route::get('/profile-settings', [ProfileSettingController::class, 'index']);
+    Route::post('/profile-settings', [ProfileSettingController::class, 'profileUpdate']);
 });
