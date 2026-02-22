@@ -33,6 +33,7 @@ class CartController extends Controller
                 'shipping_method' => 'string|max:255',
                 'shipping_price' => 'numeric',
                 'quantity' => 'integer',
+                'meta' => 'array',
             ]);
 
             $user = $request->user();
@@ -46,11 +47,36 @@ class CartController extends Controller
             $cart->total_price = $request->total_price;
             $cart->shipping_method = $request->shipping_method;
             $cart->shipping_price = $request->shipping_price;
+            $cart->meta = $request->meta;
             $cart->save();
 
             return $this->sendResponse($cart, 'Cart created successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to create cart.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function updateShipping(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'shipping_method' => 'string|max:255',
+                'shipping_price' => 'numeric',
+            ]);
+
+            $cart = Cart::find($id);
+
+            if (!$cart) {
+                return $this->sendError('Cart not found.');
+            }
+
+            $cart->shipping_method = $request->shipping_method;
+            $cart->shipping_price = $request->shipping_price;
+            $cart->save();
+
+            return $this->sendResponse($cart, 'Cart shipping updated successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to update cart shipping.', ['error' => $e->getMessage()]);
         }
     }
 }

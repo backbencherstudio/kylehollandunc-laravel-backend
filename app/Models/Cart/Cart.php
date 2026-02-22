@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cart extends Model
 {
-    //
+    protected $casts = [
+        'meta' => 'array',
+    ];
 }

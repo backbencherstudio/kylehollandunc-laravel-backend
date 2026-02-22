@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PassowordResetController;
+use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\Contact\ContactController;
+use App\Http\Controllers\Payment\CheckoutController;
 use App\Http\Controllers\ProfileSetting\ProfileSettingController;
 use App\Http\Controllers\Request\RequestController;
 use App\Http\Controllers\Setting\SettingController;
@@ -25,6 +27,7 @@ Route::post('/contacts', [ContactController::class, 'store']);
 // Request test
 Route::post('/requests', [RequestController::class, 'store']);
 
+
 Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function () {
     Route::get('user', [AuthController::class, 'getUser']);
     Route::get('users', [AuthController::class, 'getAllUsers']);
@@ -46,4 +49,13 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     // Profile Settings
     Route::get('/profile-settings', [ProfileSettingController::class, 'index']);
     Route::post('/profile-settings', [ProfileSettingController::class, 'profileUpdate']);
+
+    // Cart
+    Route::get('/carts', [CartController::class, 'index']);
+    Route::post('/carts', [CartController::class, 'store']);
+    Route::post('/carts/{id}/update-shipping', [CartController::class, 'updateShipping']);
+
+    // Payment
+    Route::post('/checkout', [CheckoutController::class, 'makePayment']);
+    Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
 });
