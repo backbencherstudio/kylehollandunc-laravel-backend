@@ -43,15 +43,17 @@ class PaymentService
         ModelsPayment::updateOrCreate([
             'order_id' => $order->id,
         ], [
-            'method' => 'stripe',
+            // 'method' => 'stripe',
+            'gateway' => 'stripe',
             'transaction_id' => $intent->id,
             'amount' => $order->total,
             'status' => 'pending',
-            'gateway' => 'stripe',
         ]); 
 
         return [
             'client_secret' => $intent->client_secret,
+            'payment_intent_id' => $intent->id,
+            'order_id' => $order->id,
         ];
     }
 
@@ -59,10 +61,10 @@ class PaymentService
     {
         $payment = ModelsPayment::create([
             'order_id' => $order->id,
-            'method' => 'paypal',
+            // 'method' => 'paypal',
+            'gateway' => 'paypal',
             'amount' => $order->total,
             'status' => 'pending',
-            'gateway' => 'paypal',
         ]);
 
         return [

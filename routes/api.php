@@ -11,6 +11,10 @@ use App\Http\Controllers\Setting\SettingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::options('{any}', function (Request $request) {
+    return response('', 200);
+})->where('any', '.*');
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -58,4 +62,5 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     // Payment
     Route::post('/checkout', [CheckoutController::class, 'makePayment']);
     Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
+    Route::post('/checkout/paypal', [CheckoutController::class, 'completePaypalPayment']);
 });

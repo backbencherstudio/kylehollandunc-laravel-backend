@@ -8,12 +8,15 @@ use App\Models\Order\Order;
 use Illuminate\Http\Request;
 use App\Services\PaymentService;
 use App\Models\Payment\Payment as ModelsPayment;
+use App\Traits\CommonTrait;
 use Illuminate\Support\Facades\Validator;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 
 class CheckoutController extends Controller
 {
+    use CommonTrait;
+
     public function makePayment(Request $request, PaymentService $paymentService)
     {
         try {
@@ -33,9 +36,10 @@ class CheckoutController extends Controller
                 'order_number' => strtoupper(uniqid()),
                 'user_id' => $request->user()->id,
                 'subtotal' => $cart->price,
-                'shipping_price' => $cart->shipping_price,
                 'total' => $cart->total_price,
                 'shipping_method' => $cart->shipping_method,
+                'shipping_price' => $cart->shipping_price,
+                'shipping_address' => $cart->shipping_address,
                 'payment_method' => $request->payment_method,
                 'order_status' => 'pending'
             ]);
@@ -81,29 +85,71 @@ class CheckoutController extends Controller
 
             return $paymentService->pay($order, $request->payment_method);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Payment failed: ' . $e->getMessage()], 500);
+            return $this->sendError(['error' => 'Payment failed: ' . $e->getMessage()], 500);
         }
     }
 
-    public function CompleteStripePayment(Order $order, $paymentIntentId)
+    public function CompleteStripePayment(Request $request)
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        $validated = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'payment_intent_id' => 'required|string'
+        ]);
 
+        if ($validated->fails()) {
+            return $this->sendError(['error' => 'Validation failed', 'details' => $validated->errors()], 422);
+        }
+
+
+        // dd('order:', $order, 'paymentIntentId:', $paymentIntentId);
         try {
+            Stripe::setApiKey(config('services.stripe.secret'));
+
+            $order = Order::find($request->order_id);
+            $paymentIntentId = $request->payment_intent_id;
+
             $intent = PaymentIntent::retrieve($paymentIntentId);
+
+            // dd($intent);
 
             if ($intent->status === 'succeeded') {
                 ModelsPayment::where('order_id', $order->id)->update([
-                    'status' => 'completed',
+                    'status' => 'success',
                     'transaction_id' => $intent->id,
                 ]);
 
-                return response()->json(['message' => 'Payment completed successfully.']);
+                return $this->sendResponse(null, 'Payment completed successfully.');
             } else {
-                return response()->json(['error' => 'Payment not completed.'], 400);
+                return $this->sendError('Payment not completed.', [], 400);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to complete payment: ' . $e->getMessage()], 500);
+            return $this->sendError(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function CompletePaypalPayment(Request $request)
+    {
+        $validated = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'transaction_id' => 'required|string'
+        ]);
+
+        if ($validated->fails()) {
+            return $this->sendError(['error' => 'Validation failed', 'details' => $validated->errors()], 422);
+        }
+
+        try {
+            $order = Order::find($request->order_id);
+            $transactionId = $request->transaction_id;
+
+            ModelsPayment::where('order_id', $order->id)->update([
+                'status' => 'success',
+                'transaction_id' => $transactionId,
+            ]);
+
+            return $this->sendResponse(null, 'Payment completed successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError(['error' => $e->getMessage()], 500);
         }
     }
 }

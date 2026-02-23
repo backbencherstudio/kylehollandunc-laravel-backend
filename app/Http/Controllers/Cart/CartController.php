@@ -47,6 +47,7 @@ class CartController extends Controller
             $cart->total_price = $request->total_price;
             $cart->shipping_method = $request->shipping_method;
             $cart->shipping_price = $request->shipping_price;
+            $cart->shipping_address = $request->shipping_address;
             $cart->meta = $request->meta;
             $cart->save();
 
@@ -62,6 +63,7 @@ class CartController extends Controller
             $request->validate([
                 'shipping_method' => 'string|max:255',
                 'shipping_price' => 'numeric',
+                'shipping_address' => 'string',
             ]);
 
             $cart = Cart::find($id);
@@ -72,6 +74,8 @@ class CartController extends Controller
 
             $cart->shipping_method = $request->shipping_method;
             $cart->shipping_price = $request->shipping_price;
+            $cart->shipping_address = $request->shipping_address;
+            $cart->total_price = $cart->total_price + $cart->shipping_price;
             $cart->save();
 
             return $this->sendResponse($cart, 'Cart shipping updated successfully.');
