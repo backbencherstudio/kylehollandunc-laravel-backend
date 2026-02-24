@@ -7,6 +7,7 @@ use App\Http\Controllers\Contact\ContactController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Payment\CheckoutController;
 use App\Http\Controllers\ProfileSetting\ProfileSettingController;
+use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Request\RequestController;
 use App\Http\Controllers\Setting\SettingController;
 use Illuminate\Http\Request;
@@ -62,9 +63,17 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders/{id}/update-status', [OrderController::class, 'orderStatusUpdate']);
+    Route::post('/orders/sample', [OrderController::class, 'orderSample']);
 
     // Payment
     Route::post('/checkout', [CheckoutController::class, 'makePayment']);
     Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
     Route::post('/checkout/paypal', [CheckoutController::class, 'completePaypalPayment']);
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index']);
+    Route::get('/reports/{id}', [ReportController::class, 'show']);
+    Route::post('/reports/{id}', [ReportController::class, 'update']);
 });
