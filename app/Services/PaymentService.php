@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use PayPalCheckoutSdk\Core\PayPalHttpClient;
+use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use App\Models\Order\Order;
 use App\Models\Payment\Payment as ModelsPayment;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
+
 
 class PaymentService
 {
@@ -48,7 +52,7 @@ class PaymentService
             'transaction_id' => $intent->id,
             'amount' => $order->total,
             'status' => 'pending',
-        ]); 
+        ]);
 
         return [
             'client_secret' => $intent->client_secret,
@@ -59,17 +63,47 @@ class PaymentService
 
     private function processPaypalPayment(Order $order)
     {
-        $payment = ModelsPayment::create([
-            'order_id' => $order->id,
-            // 'method' => 'paypal',
-            'gateway' => 'paypal',
-            'amount' => $order->total,
-            'status' => 'pending',
-        ]);
+        try {
 
-        return [
-            'payment_id' => $payment->id,
-            'approval_url' => 'https://www.paypal.com/checkoutnow?token=' . $payment->id,
-        ];
+            $environment = new SandboxEnvironment(
+                config('services.paypal.client_id'),
+                config('services.paypal.client_secret')
+            );
+
+            $client = new PayPalHttpClient($environment);
+
+            $request = new OrdersCreateRequest();
+            $request->prefer('return=representation');
+
+            $request->body = [
+                "intent" => "CAPTURE",
+                "purchase_units" => [[
+                    "amount" => [
+                        "currency_code" => "USD",
+                        "value" => number_format($order->total, 2, '.', '')
+                    ]
+                ]]
+            ];
+
+            $response = $client->execute($request);
+
+            $paypalOrderId = $response->result->id;
+
+            $payment = ModelsPayment::create([
+                'order_id' => $order->id,
+                // 'method' => 'paypal',
+                'gateway' => 'paypal',
+                'transaction_id' => $paypalOrderId,
+                'amount' => $order->total,
+                'status' => 'pending',
+            ]);
+
+            return [
+                'order_id' => $order->id,
+                'paypal_order_id' => $paypalOrderId,
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('PayPal payment processing failed: ' . $e->getMessage());
+        }
     }
 }

@@ -12,6 +12,9 @@ use App\Traits\CommonTrait;
 use Illuminate\Support\Facades\Validator;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
+use PayPalCheckoutSdk\Orders\OrdersCaptureRequest;
+use PayPalCheckoutSdk\Core\SandboxEnvironment;
+use PayPalCheckoutSdk\Core\PayPalHttpClient;
 
 class CheckoutController extends Controller
 {
@@ -131,7 +134,7 @@ class CheckoutController extends Controller
     {
         $validated = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'transaction_id' => 'required|string'
+            'paypal_order_id' => 'required|string'
         ]);
 
         if ($validated->fails()) {
@@ -139,15 +142,30 @@ class CheckoutController extends Controller
         }
 
         try {
-            $order = Order::find($request->order_id);
-            $transactionId = $request->transaction_id;
+            $environment = new SandboxEnvironment(
+                config('services.paypal.client_id'),
+                config('services.paypal.client_secret')
+            );
 
-            ModelsPayment::where('order_id', $order->id)->update([
-                'status' => 'success',
-                'transaction_id' => $transactionId,
-            ]);
+            $client = new PayPalHttpClient($environment);
 
-            return $this->sendResponse(null, 'Payment completed successfully.');
+            $captureRequest = new OrdersCaptureRequest($request->paypal_order_id);
+            $captureRequest->prefer('return=representation');
+
+            $response = $client->execute($captureRequest);
+
+            if ($response->result->status === "COMPLETED") {
+
+                ModelsPayment::where('order_id', $request->order_id)->update([
+                    'status' => 'success'
+                ]);
+
+                Order::where('id', $request->order_id)->update([
+                    'payment_status' => 'paid'
+                ]);
+                return $this->sendResponse(null, 'Payment completed successfully.');
+            }
+            return $this->sendError('Payment not completed.', [], 400);
         } catch (\Exception $e) {
             return $this->sendError(['error' => $e->getMessage()], 500);
         }

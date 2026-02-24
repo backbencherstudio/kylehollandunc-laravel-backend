@@ -2,6 +2,7 @@
 
 namespace App\Models\Order;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
@@ -16,6 +17,11 @@ class Order extends Model
         'payment_method',
         'order_status'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function items()
     {
