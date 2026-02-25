@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Cart\Cart;
 use PayPalCheckoutSdk\Core\PayPalHttpClient;
 use PayPalCheckoutSdk\Core\SandboxEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
@@ -13,15 +14,15 @@ use Stripe\Stripe;
 
 class PaymentService
 {
-    public function pay(Order $order, $paymentMethod)
+    public function pay(Cart $cart, Order $order, $paymentMethod)
     {
         try {
             if ($paymentMethod === 'card') {
-                return $this->processStripePayment($order);
+                return $this->processStripePayment($cart, $order);
             }
 
             if ($paymentMethod === 'paypal') {
-                return $this->processPaypalPayment($order);
+                return $this->processPaypalPayment($cart, $order);
             }
 
             throw new \Exception('Invalid payment method: ' . $paymentMethod);
@@ -30,7 +31,7 @@ class PaymentService
         }
     }
 
-    private function processStripePayment(Order $order)
+    private function processStripePayment(Cart $cart, Order $order)
     {
         Stripe::setApiKey(config('services.stripe.secret'));
 
@@ -54,6 +55,8 @@ class PaymentService
             'status' => 'pending',
         ]);
 
+        $cart->delete();
+
         return [
             'client_secret' => $intent->client_secret,
             'payment_intent_id' => $intent->id,
@@ -61,7 +64,7 @@ class PaymentService
         ];
     }
 
-    private function processPaypalPayment(Order $order)
+    private function processPaypalPayment(Cart $cart, Order $order)
     {
         try {
 
@@ -97,6 +100,8 @@ class PaymentService
                 'amount' => $order->total,
                 'status' => 'pending',
             ]);
+
+            $cart->delete();
 
             return [
                 'order_id' => $order->id,

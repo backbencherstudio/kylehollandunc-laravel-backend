@@ -9,4 +9,9 @@ class Cart extends Model
     protected $casts = [
         'meta' => 'array',
     ];
+
+    public function sample()
+    {
+        return $this->hasOne(CartSample::class);
+    }
 }

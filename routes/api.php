@@ -66,6 +66,8 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('/carts', [CartController::class, 'index']);
     Route::post('/carts', [CartController::class, 'store']);
     Route::post('/carts/{id}/update-shipping', [CartController::class, 'updateShipping']);
+    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
+    Route::post('/carts/sample', [CartController::class, 'cartSample']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);

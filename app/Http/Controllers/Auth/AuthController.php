@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting\Setting;
 use App\Models\User;
+use App\Notifications\AdminNotify;
 use App\Traits\CommonTrait;
 use App\Notifications\SendPasswordOtp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class AuthController extends Controller
 {
@@ -46,11 +49,28 @@ class AuthController extends Controller
                 'password' => 'required|string|min:8',
             ]);
 
+            if (User::where('email', $request->email)->exists()) {
+                return $this->sendError('Email already exists', 400);
+            }
+
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
+
+            // dd(Setting::get('user_registration', '1'));
+            if (Setting::get('user_registration', '1')) {
+                $adminEmail = env('ADMIN_EMAIL');
+                if ($adminEmail) {
+                    $subject = 'New User Registration';
+                    $data = [
+                        'name' => $request->name,
+                        'email' => $request->email,
+                    ];
+                    Notification::route('mail', $adminEmail)->notify(new AdminNotify($subject, $data));
+                }
+            }
 
             return $this->sendResponse($user, 'User registered successfully');
         } catch (\Exception $e) {
@@ -60,7 +80,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // dd($request->all());
+        // return $this->sendResponse($request->all(), 'Request data retrieved');
         try {
             $request->validate([
                 'email' => 'required|string|email',

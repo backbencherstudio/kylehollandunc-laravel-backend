@@ -17,8 +17,8 @@ class RequestController extends Controller
     public function index()
     {
         try {
-            $contacts = ModelsRequest::latest()->get();
-            return $this->sendResponse($contacts, 'Requests retrieved successfully.');
+            $getAllRequest = ModelsRequest::latest()->get();
+            return $this->sendResponse($getAllRequest, 'Requests retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve requests.', ['error' => $e->getMessage()]);
         }
@@ -36,15 +36,15 @@ class RequestController extends Controller
                 'message' => 'required|string',
             ]);
 
-            $contact = new ModelsRequest();
-            $contact->name = $request->name;
-            $contact->email = $request->email;
-            $contact->organization = $request->organization;
-            $contact->test = $request->test;
-            $contact->message = $request->message;
-            $contact->save();
+            $makeRequest = new ModelsRequest();
+            $makeRequest->name = $request->name;
+            $makeRequest->email = $request->email;
+            $makeRequest->organization = $request->organization;
+            $makeRequest->test = $request->test;
+            $makeRequest->message = $request->message;
+            $makeRequest->save();
 
-            return $this->sendResponse($contact, 'Contact created successfully.');
+            return $this->sendResponse($makeRequest, 'Request created successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to create contact.', ['error' => $e->getMessage()]);
         }
@@ -53,13 +53,13 @@ class RequestController extends Controller
     public function show($id)
     {
         try {
-            $contact = ModelsRequest::find($id);
+            $makeRequest = ModelsRequest::find($id);
 
-            if (!$contact) {
+            if (!$makeRequest) {
                 return $this->sendError('Contact not found.');
             }
 
-            return $this->sendResponse($contact, 'Contact retrieved successfully.');
+            return $this->sendResponse($makeRequest, 'Contact retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve contact.', ['error' => $e->getMessage()]);
         }

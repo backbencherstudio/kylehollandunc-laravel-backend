@@ -14,7 +14,7 @@ class CartController extends Controller
     public function index()
     {
         try {
-            $carts = Cart::latest()->get();
+            $carts = Cart::with('sample')->latest()->get();
             return $this->sendResponse($carts, 'Carts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve carts.', ['error' => $e->getMessage()]);
@@ -81,6 +81,29 @@ class CartController extends Controller
             return $this->sendResponse($cart, 'Cart shipping updated successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to update cart shipping.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function cartSample(Request $request)
+    {
+        // dd($request->all());
+        try {
+            $request->validate([
+                'cart_id' => 'required|exists:carts,id',
+                'organization' => 'string|max:255',
+                'test' => 'string|max:255',
+                'details' => 'string'
+            ]);
+            $cart = Cart::findOrFail($request->cart_id);
+            $cart->sample()->create([
+                'cart_id' => $request->cart_id,
+                'organization' => $request->organization,
+                'test' => $request->test,
+                'details' => $request->details
+            ]);
+            return $this->sendResponse($cart->sample, 'Cart sample created successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to create cart sample.', ['error' => $e->getMessage()]);
         }
     }
 }

@@ -32,8 +32,12 @@ class CheckoutController extends Controller
                 return response()->json(['error' => 'Validation failed', 'details' => $validated->errors()], 422);
             }
 
-            $cart = Cart::find($request->cart_id);
-            // dd($request->all());
+            $cart = Cart::with('sample')->find($request->cart_id);
+            return $this->sendResponse($cart, 'Cart retrieved successfully.');
+
+            if (!$cart) {
+                return $this->sendError('Cart not found.', [], 404);
+            }
 
             $order = Order::create([
                 'order_number' => strtoupper(uniqid()),
@@ -46,6 +50,19 @@ class CheckoutController extends Controller
                 'payment_method' => $request->payment_method,
                 'order_status' => 'pending'
             ]);
+
+            if (!$order) {
+                return $this->sendError('Failed to create order.', [], 500);
+            }
+
+            if ($cart->sample) {
+                $order->sample()->create([
+                    'order_id' => $order->id,
+                    'organization' => $cart->sample->organization,
+                    'test' => $cart->sample->test,
+                    'details' => $cart->sample->details,
+                ]);
+            }
 
             // foreach ($cart->meta as $item) {
             //     dd($item);
@@ -86,7 +103,7 @@ class CheckoutController extends Controller
                 }
             }
 
-            return $paymentService->pay($order, $request->payment_method);
+            return $paymentService->pay($cart, $order, $request->payment_method);
         } catch (\Exception $e) {
             return $this->sendError(['error' => 'Payment failed: ' . $e->getMessage()], 500);
         }

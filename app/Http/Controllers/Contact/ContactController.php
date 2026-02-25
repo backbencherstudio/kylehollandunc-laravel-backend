@@ -31,16 +31,14 @@ class ContactController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
-                'organization' => 'nullable|string|max:255',
-                'test' => 'nullable|string|max:255',
+                'order_id' => 'nullable|max:255',
                 'message' => 'required|string',
             ]);
 
             $contact = new Contact();
             $contact->name = $request->name;
             $contact->email = $request->email;
-            $contact->organization = $request->organization;
-            $contact->test = $request->test;
+            $contact->order_id = $request->order_id;
             $contact->message = $request->message;
             $contact->save();
 
