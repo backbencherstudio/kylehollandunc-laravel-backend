@@ -88,15 +88,19 @@ class RequestController extends Controller
 
     public function destroy($id)
     {
-        $contact = ModelsRequest::find($id);
+        try {
+            $getRequest = ModelsRequest::find($id);
 
-        if (!$contact) {
-            return $this->sendError('Contact not found.');
+            if (!$getRequest) {
+                return $this->sendError('Request not found.');
+            }
+
+            $getRequest->delete();
+
+            return $this->sendResponse([], 'Request deleted successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to delete request.', ['error' => $e->getMessage()]);
         }
-
-        $contact->delete();
-
-        return $this->sendResponse([], 'Contact deleted successfully.');
     }
 
     public function reply(Request $request, $id)

@@ -51,4 +51,42 @@ class ReportController extends Controller
             return $this->sendError('Failed to update report.', ['error' => $e->getMessage()]);
         }
     }
+
+    public function destroy($id)
+    {
+        // dd($id);
+        try {
+            $report = Report::findOrFail($id);
+            if ($report->report_file) {
+                Storage::delete($report->report_file);
+            }
+            $report->delete();
+            return $this->sendResponse(null, 'Report deleted successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to delete report.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function downloadReport($id)
+    {
+        try {
+            $report = Report::findOrFail($id);
+            if (!$report->report_file) {
+                return $this->sendError('Report file not found.');
+            }
+            return Storage::download($report->report_file);
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to download report file.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function reportDetails($id)
+    {
+        try {
+            $report = Report::findOrFail($id);
+            return $this->sendResponse($report, 'Report details retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to retrieve report details.', ['error' => $e->getMessage()]);
+        }
+    }
 }

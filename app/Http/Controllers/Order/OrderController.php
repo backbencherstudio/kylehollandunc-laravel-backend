@@ -55,9 +55,24 @@ class OrderController extends Controller
             } else {
                 return $this->sendResponse($order, 'Order status updated successfully.');
             }
-
         } catch (\Exception $e) {
             return $this->sendError('Failed to update order status.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function update(Request $request, $id) {}
+
+    public function destroy($id)
+    {
+        try {
+            $order = Order::findOrFail($id);
+            if ($order->report) {
+                $order->report->delete();
+            }
+            $order->delete();
+            return $this->sendResponse(null, 'Order deleted successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to delete order.', ['error' => $e->getMessage()]);
         }
     }
 
@@ -84,6 +99,31 @@ class OrderController extends Controller
             return $this->sendResponse($order->sample, 'Order sample created successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to create order sample.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function userOrders(Request $request)
+    {
+        try {
+            $status = $request->input('status');
+            // dd($status);
+            $user = $request->user();
+            $orders = Order::with('items')->where('user_id', $user->id)->latest()->get();
+            if ($status) {
+                $orders = $orders->where('order_status', $status);
+                if ($orders->isEmpty()) {
+                    return $this->sendResponse([], 'No orders found with the specified status.');
+                } else {
+                    return $this->sendResponse($orders, 'User orders with status "' . $status . '" retrieved successfully.');
+                }
+            } else {
+                if ($orders->isEmpty()) {
+                    return $this->sendResponse([], 'No orders found for the user.');
+                }
+            }
+            return $this->sendResponse($orders, 'User orders retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to retrieve user orders.', ['error' => $e->getMessage()]);
         }
     }
 }

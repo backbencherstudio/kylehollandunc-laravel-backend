@@ -94,5 +94,14 @@ class AuthController extends Controller
         }
     }
 
-    
+    public function deleteUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->delete();
+            return $this->sendResponse(null, 'User deleted successfully');
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
 }

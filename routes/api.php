@@ -34,9 +34,15 @@ Route::post('/contacts', [ContactController::class, 'store']);
 Route::post('/requests', [RequestController::class, 'store']);
 
 
+
+// Reports
+Route::get('/reports/{id}/download', [ReportController::class, 'downloadReport']);
+Route::get('/reports/{id}/details', [ReportController::class, 'reportDetails']);
+
 Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function () {
     Route::get('user', [AuthController::class, 'getUser']);
     Route::get('users', [AuthController::class, 'getAllUsers']);
+    Route::delete('users/{id}', [AuthController::class, 'deleteUser']);
     Route::post('logout', [AuthController::class, 'logout']);
     // Contacts
     Route::get('/contacts', [ContactController::class, 'index']);
@@ -65,7 +71,10 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::post('/orders/{id}/update-status', [OrderController::class, 'orderStatusUpdate']);
+    Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
     Route::post('/orders/sample', [OrderController::class, 'orderSample']);
+    // user orders
+    Route::get('/user-orders', [OrderController::class, 'userOrders']);
 
     // Payment
     Route::post('/checkout', [CheckoutController::class, 'makePayment']);
@@ -76,4 +85,6 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('/reports', [ReportController::class, 'index']);
     Route::get('/reports/{id}', [ReportController::class, 'show']);
     Route::post('/reports/{id}', [ReportController::class, 'update']);
+    Route::delete('/reports/{id}', [ReportController::class, 'destroy']);
+    // Route::get('/reports/{id}/download', [ReportController::class, 'downloadReport']);
 });
