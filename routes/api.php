@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PassowordResetController;
 use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\Contact\ContactController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Payment\CheckoutController;
 use App\Http\Controllers\ProfileSetting\ProfileSettingController;
@@ -44,6 +45,10 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('users', [AuthController::class, 'getAllUsers']);
     Route::delete('users/{id}', [AuthController::class, 'deleteUser']);
     Route::post('logout', [AuthController::class, 'logout']);
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
     // Contacts
     Route::get('/contacts', [ContactController::class, 'index']);
     Route::get('/contacts/{id}', [ContactController::class, 'show']);

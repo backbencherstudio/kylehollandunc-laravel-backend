@@ -69,7 +69,8 @@ class PassowordResetController extends Controller
 
             // dd($record);
             if (!$record) {
-                return $this->sendError('Invalid OTP.', [], 400);
+                return $this->sendError('Invalid OTP.', 400);
+                
             }
 
             // Check if the OTP has expired

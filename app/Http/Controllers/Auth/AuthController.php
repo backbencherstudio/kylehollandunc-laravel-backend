@@ -32,7 +32,7 @@ class AuthController extends Controller
     public function getAllUsers()
     {
         try {
-            $users = User::with('profileInfo')->get();
+            $users = User::with('profileInfo')->paginate(10);
             return $this->sendResponse($users, 'Users retrieved successfully');
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);
@@ -60,7 +60,7 @@ class AuthController extends Controller
             ]);
 
             // dd(Setting::get('user_registration', '1'));
-            if (Setting::get('user_registration', '1')) {
+            if (Setting::get("user_registration") == "true") {
                 $adminEmail = env('ADMIN_EMAIL');
                 if ($adminEmail) {
                     $subject = 'New User Registration';

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Contact;
 use App\Http\Controllers\Controller;
 use App\Models\Contact\Contact;
 use App\Models\Contact\ContactReply;
+use App\Models\Setting\Setting;
+use App\Notifications\AdminNotify;
 use App\Notifications\ContactReplyNotification;
 use App\Traits\CommonTrait;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ class ContactController extends Controller
     public function index()
     {
         try {
-            $contacts = Contact::latest()->get();
+            $contacts = Contact::latest()->paginate(10);
             return $this->sendResponse($contacts, 'Contacts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve contacts.', ['error' => $e->getMessage()]);
@@ -41,6 +43,19 @@ class ContactController extends Controller
             $contact->order_id = $request->order_id;
             $contact->message = $request->message;
             $contact->save();
+
+            if (Setting::get('contact_message') == "true") {
+                $adminEmail = env('ADMIN_EMAIL');
+                if ($adminEmail) {
+                    $subject = 'New Contact Message';
+                    $data = [
+                        'name' => $request->name,
+                        'email' => $request->email,
+                        'Message' => $request->message
+                    ];
+                    Notification::route('mail', $adminEmail)->notify(new AdminNotify($subject, $data));
+                }
+            }
 
             return $this->sendResponse($contact, 'Contact created successfully.');
         } catch (\Exception $e) {

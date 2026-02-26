@@ -15,7 +15,7 @@ class OrderController extends Controller
     public function index()
     {
         try {
-            $orders = Order::with('user', 'items')->latest()->get();
+            $orders = Order::with('user', 'items')->latest()->paginate(10);
             return $this->sendResponse($orders, 'Orders retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve orders.', ['error' => $e->getMessage()]);

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Request\Request as ModelsRequest;
 use Illuminate\Http\Request;
 use App\Models\Request\RequestReply;
+use App\Models\Setting\Setting;
+use App\Notifications\AdminNotify;
 use App\Notifications\RequestReplyNotification;
 use Illuminate\Support\Facades\Notification;
 use App\Traits\CommonTrait;
@@ -17,7 +19,7 @@ class RequestController extends Controller
     public function index()
     {
         try {
-            $getAllRequest = ModelsRequest::latest()->get();
+            $getAllRequest = ModelsRequest::latest()->paginate(10);
             return $this->sendResponse($getAllRequest, 'Requests retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve requests.', ['error' => $e->getMessage()]);
@@ -43,6 +45,20 @@ class RequestController extends Controller
             $makeRequest->test = $request->test;
             $makeRequest->message = $request->message;
             $makeRequest->save();
+
+            if (Setting::get('test_request') == "true") {
+                $adminEmail = env('ADMIN_EMAIL');
+                if ($adminEmail) {
+                    $subject = 'New Test Request';
+                    $data = [
+                        'name' => $request->name,
+                        'email' => $request->email,
+                        'organization' => $request->organization,
+                        'test' => $request->test
+                    ];
+                    Notification::route('mail', $adminEmail)->notify(new AdminNotify($subject, $data));
+                }
+            }
 
             return $this->sendResponse($makeRequest, 'Request created successfully.');
         } catch (\Exception $e) {
