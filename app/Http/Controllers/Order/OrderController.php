@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order\Order;
 use App\Traits\CommonTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 
 class OrderController extends Controller
@@ -21,6 +22,7 @@ class OrderController extends Controller
             return $this->sendError('Failed to retrieve orders.', ['error' => $e->getMessage()]);
         }
     }
+
 
     public function show($id)
     {

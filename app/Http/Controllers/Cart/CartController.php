@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart\Cart;
 use App\Traits\CommonTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -15,6 +16,19 @@ class CartController extends Controller
     {
         try {
             $carts = Cart::with('sample')->latest()->get();
+            return $this->sendResponse($carts, 'Carts retrieved successfully.');
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to retrieve carts.', ['error' => $e->getMessage()]);
+        }
+    }
+
+    
+
+    public function cartByUser()
+    {
+        try {
+            $user = Auth::user();
+            $carts = Cart::where('user_id', $user->id)->with('sample')->latest()->get();
             return $this->sendResponse($carts, 'Carts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve carts.', ['error' => $e->getMessage()]);
