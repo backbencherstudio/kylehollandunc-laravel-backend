@@ -8,6 +8,7 @@ use App\Traits\CommonTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -110,7 +111,12 @@ class OrderController extends Controller
             $status = $request->input('status');
             // dd($status);
             $user = $request->user();
-            $orders = Order::with('items')->where('user_id', $user->id)->latest()->get();
+            $orders = Order::with('items', 'report')->where('user_id', $user->id)->latest()->get();
+
+            foreach ($orders as $order) {
+                $order->report->report_file = $order->report->report_file ? Storage::url($order->report->report_file) : null;
+            }
+            
             if ($status) {
                 $orders = $orders->where('order_status', $status);
                 if ($orders->isEmpty()) {
