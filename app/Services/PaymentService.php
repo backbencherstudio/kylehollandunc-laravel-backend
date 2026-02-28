@@ -8,6 +8,7 @@ use PayPalCheckoutSdk\Core\SandboxEnvironment;
 use PayPalCheckoutSdk\Orders\OrdersCreateRequest;
 use App\Models\Order\Order;
 use App\Models\Payment\Payment as ModelsPayment;
+use Illuminate\Support\Facades\Auth;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 
@@ -55,7 +56,9 @@ class PaymentService
             'status' => 'pending',
         ]);
 
-        $cart->delete();
+        $user = Auth::user();
+
+        Cart::where('user_id', $user->id)->delete();
 
         return [
             'client_secret' => $intent->client_secret,
@@ -101,7 +104,9 @@ class PaymentService
                 'status' => 'pending',
             ]);
 
-            $cart->delete();
+            $user = Auth::user();
+
+            Cart::where('user_id', $user->id)->delete();
 
             return [
                 'order_id' => $order->id,

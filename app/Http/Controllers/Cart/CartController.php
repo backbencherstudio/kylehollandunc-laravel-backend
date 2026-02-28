@@ -52,6 +52,11 @@ class CartController extends Controller
 
             $user = $request->user();
 
+            $existing_user_carts = Cart::where('user_id', $user->id)->get();
+            if ($existing_user_carts) {
+                Cart::where('user_id', $user->id)->delete();
+            }
+
             $cart = new Cart();
             $cart->user_id = $user->id;
             $cart->type = $request->type;
@@ -77,7 +82,7 @@ class CartController extends Controller
             $request->validate([
                 'shipping_method' => 'string|max:255',
                 'shipping_price' => 'numeric',
-                'shipping_address' => 'string',
+                // 'shipping_address' => 'string',
             ]);
 
             $cart = Cart::find($id);
@@ -86,10 +91,20 @@ class CartController extends Controller
                 return $this->sendError('Cart not found.');
             }
 
+            // keep previous shipping price to adjust total
+            $oldShippingPrice = $cart->shipping_price ?? 0;
+
             $cart->shipping_method = $request->shipping_method;
-            $cart->shipping_price = $request->shipping_price;
+            // if no price provided assume zero (e.g. own_courier)
+            $cart->shipping_price = $request->shipping_price ?? 0;
             $cart->shipping_address = $request->shipping_address;
-            $cart->total_price = $cart->total_price + $cart->shipping_price;
+
+            // subtract old price then add new price
+            $cart->total_price = $cart->total_price - $oldShippingPrice + $cart->shipping_price;
+            if ($cart->total_price < 0) {
+                $cart->total_price = 0;
+            }
+
             $cart->save();
 
             return $this->sendResponse($cart, 'Cart shipping updated successfully.');

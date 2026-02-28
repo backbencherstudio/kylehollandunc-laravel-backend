@@ -33,7 +33,7 @@ class CheckoutController extends Controller
             }
 
             $cart = Cart::with('sample')->find($request->cart_id);
-            return $this->sendResponse($cart, 'Cart retrieved successfully.');
+            // return $this->sendResponse($cart, 'Cart retrieved successfully.');
 
             if (!$cart) {
                 return $this->sendError('Cart not found.', [], 404);
