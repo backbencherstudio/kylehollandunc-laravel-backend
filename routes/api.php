@@ -53,6 +53,7 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('/contacts', [ContactController::class, 'index']);
     Route::get('/contacts/{id}', [ContactController::class, 'show']);
     Route::post('/contacts/{id}/reply', [ContactController::class, 'reply']);
+    Route::delete('/contacts/{id}', [ContactController::class, 'destroy']);
 
     // Requests
     Route::get('/requests', [RequestController::class, 'index']);

@@ -28,6 +28,44 @@ class DashboardController extends Controller
             $contactRequests = Contact::all();
             $contactRequestsCount = $contactRequests->count();
 
+            // monthly counts for graphing
+            $testMonthly = TestRequest::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->pluck('count', 'month')
+                ->toArray();
+
+            $contactMonthly = Contact::selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->pluck('count', 'month')
+                ->toArray();
+
+            // ensure every month key exists
+            for ($m = 1; $m <= 12; $m++) {
+                if (!isset($testMonthly[$m])) {
+                    $testMonthly[$m] = 0;
+                }
+                if (!isset($contactMonthly[$m])) {
+                    $contactMonthly[$m] = 0;
+                }
+            }
+            ksort($testMonthly);
+            ksort($contactMonthly);
+
+            // replace numeric keys with month names for frontend
+            $namedTestMonthly = [];
+            foreach ($testMonthly as $num => $count) {
+                $name = Carbon::create()->month($num)->format('F');
+                $namedTestMonthly[$name] = $count;
+            }
+            $namedContactMonthly = [];
+            foreach ($contactMonthly as $num => $count) {
+                $name = Carbon::create()->month($num)->format('F');
+                $namedContactMonthly[$name] = $count;
+            }
+            // use named arrays below
+
             $pendingOrders = Order::where('order_status', 'pending')->count();
 
             $data = [
@@ -37,14 +75,16 @@ class DashboardController extends Controller
                 'test_requests' => [
                     'count' => $testRequestsCount,
                     'items' => $testRequests,
+                    'monthly_counts' => $namedTestMonthly,
                 ],
                 'contact_requests' => [
                     'count' => $contactRequestsCount,
                     'items' => $contactRequests,
+                    'monthly_counts' => $namedContactMonthly,
                 ],
             ];
 
-            return $this->sendResponse($data);
+            return $this->sendResponse($data, 'Dashboard data retrived successfully');
         } catch (\Throwable $e) {
             return $this->sendError('Unable to fetch dashboard data: ' . $e->getMessage());
         }

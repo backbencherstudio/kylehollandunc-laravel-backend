@@ -38,11 +38,13 @@ class OrderController extends Controller
     public function orderStatusUpdate(Request $request, $id)
     {
         try {
+            // return $this->sendResponse($id);
             $request->validate([
                 'order_status' => 'required|string|max:255'
             ]);
 
-            $order = Order::findOrFail($id)->with('user')->first();
+            // correctly load order with user relationship by id
+            $order = Order::with('user')->findOrFail($id);
             // dd($order->user);
             $order->order_status = $request->order_status;
             $order->save();
@@ -113,9 +115,9 @@ class OrderController extends Controller
             $user = $request->user();
             $orders = Order::with('items', 'report')->where('user_id', $user->id)->latest()->get();
 
-            foreach ($orders as $order) {
-                $order->report->report_file = $order->report->report_file ? Storage::url($order->report->report_file) : null;
-            }
+            // foreach ($orders as $order) {
+            //     $order->report->report_file = $order->report->report_file ? Storage::url($order->report->report_file) : null;
+            // }
             
             if ($status) {
                 $orders = $orders->where('order_status', $status);
