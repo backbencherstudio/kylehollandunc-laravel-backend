@@ -134,7 +134,7 @@ class ContactController extends Controller
 
             $reply->user_name = $contact->name;
             // Send notification email to the contact's email address
-            Notification::route('mail', $contact->email)
+            Notification::route('mail', $request->email ? $request->email : $contact->email)
                 ->notify(new ContactReplyNotification($reply));
 
             return $this->sendResponse($reply, 'Reply sent successfully.');
