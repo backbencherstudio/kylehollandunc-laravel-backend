@@ -46,6 +46,9 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::delete('users/{id}', [AuthController::class, 'deleteUser']);
     Route::post('logout', [AuthController::class, 'logout']);
 
+
+    Route::post('/admin-reset-password', [PassowordResetController::class, 'adminPassReset']);
+
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
 

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Traits\CommonTrait;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProfileSettingController extends Controller
@@ -30,11 +31,20 @@ class ProfileSettingController extends Controller
                 'state' => 'nullable|string|max:255',
             ]);
 
+            // dd($request->hasFile('profile_img'));
+
             if ($validate->fails()) {
                 return $this->sendError($validate->errors());
             }
 
+        
+            if ($request->hasFile('profile_img')) {
+                $image = $request->file('profile_img');
+                $path = Storage::disk('public')->put('profile', $image);
+            }
+
             $user = Auth()->user();
+
 
             $user->update([
                 'name' => $request->name,
@@ -44,6 +54,7 @@ class ProfileSettingController extends Controller
             ProfileSetting::updateOrCreate(
                 ['user_id' => $user->id],
                 [
+                    'profile_img' => $path,
                     'phone' => $request->phone,
                     'country' => $request->country,
                     'state' => $request->state,

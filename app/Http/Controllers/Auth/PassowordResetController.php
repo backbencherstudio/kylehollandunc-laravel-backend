@@ -70,7 +70,7 @@ class PassowordResetController extends Controller
             // dd($record);
             if (!$record) {
                 return $this->sendError('Invalid OTP.', 400);
-                
+
             }
 
             // Check if the OTP has expired
@@ -122,11 +122,36 @@ class PassowordResetController extends Controller
         }
     }
 
-    public function adminPassReset() {
-        $validate = Validator::make(request()->all(), [
-            'password' => 'required|string|min:8',
-            'new_password' => 'required|string|min:8',
-            'confirm_password' => 'required|string|min:8|same:new_password',
-        ]);
+    public function adminPassReset(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'password' => 'required|string|min:8',
+                'new_password' => 'required|string|min:8',
+                'confirm_password' => 'required|string|min:8|same:new_password',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError(['Validation Error.', $validator->errors()], 422);
+            }
+
+            $user = $request->user();
+            if (!$user) {
+                return $this->sendError('Unauthorized.', [], 401);
+            }
+
+            // verify current password
+            if (!Hash::check($request->password, $user->password)) {
+                return $this->sendError('Current password is incorrect.', [], 400);
+            }
+
+            // update to new password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return $this->sendResponse(['message' => 'Password updated successfully.'], 200);
+        } catch (\Exception $e) {
+            return $this->sendError('Failed to reset admin password.', ['error' => $e->getMessage()], 500);
+        }
     }
 }

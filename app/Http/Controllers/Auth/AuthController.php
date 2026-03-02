@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -23,6 +24,9 @@ class AuthController extends Controller
         try {
             $user = $request->user();
             $user->load('profileInfo');
+            if ($user->profileInfo && $user->profileInfo->profile_img) {
+                $user->profileInfo->profile_img = Storage::disk('public')->url($user->profileInfo->profile_img);
+            }
             return $this->sendResponse($user, 'User retrieved successfully');
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);

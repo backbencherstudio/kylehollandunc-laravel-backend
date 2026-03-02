@@ -36,18 +36,25 @@ class SettingController extends Controller
         try {
             // dd($request->all());
             $validated = Validator::make($request->all(), [
-                'user_registration' => 'boolean',
-                'test_request' => 'boolean',
-                'contact_message' => 'boolean',
+                'user_registration' => 'sometimes|boolean',
+                'test_request' => 'sometimes|boolean',
+                'contact_message' => 'sometimes|boolean',
             ]);
 
             if ($validated->fails()) {
                 return $this->sendError($validated->errors());
             }
 
-            Setting::set('user_registration', $request->input('user_registration'));
-            Setting::set('test_request', $request->input('test_request'));
-            Setting::set('contact_message', $request->input('contact_message'));
+            // only set the values that were present in the payload
+            if ($request->has('user_registration')) {
+                Setting::set('user_registration', $request->input('user_registration'));
+            }
+            if ($request->has('test_request')) {
+                Setting::set('test_request', $request->input('test_request'));
+            }
+            if ($request->has('contact_message')) {
+                Setting::set('contact_message', $request->input('contact_message'));
+            }
 
             return $this->sendResponse(['message' => 'Notification settings updated successfully.']);
         } catch (\Exception $e) {

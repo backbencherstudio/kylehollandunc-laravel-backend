@@ -15,7 +15,8 @@ class CartController extends Controller
     public function index()
     {
         try {
-            $carts = Cart::with('sample')->latest()->get();
+            $user = Auth::user();
+            $carts = Cart::where('user_id', $user->id)->with('sample')->latest()->get();
             return $this->sendResponse($carts, 'Carts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve carts.', ['error' => $e->getMessage()]);

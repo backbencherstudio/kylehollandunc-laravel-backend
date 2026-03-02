@@ -25,6 +25,9 @@ class ReportController extends Controller
     {
         try {
             $report = Report::with('order')->findOrFail($id);
+            if ($report && $report->report_file) {
+                $report->report_file = Storage::disk('public')->url($report->report_file);
+            }
             return $this->sendResponse($report, 'Report retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve report.', ['error' => $e->getMessage()]);
@@ -41,7 +44,7 @@ class ReportController extends Controller
             $report->lot = $request->lot;
             if ($request->hasFile('report_file')) {
                 $reportFile = $request->file('report_file');
-                $path = Storage::put('reports', $reportFile);
+                $path = Storage::disk('public')->put('reports', $reportFile);
                 $report->report_file = $path;
             }
             $report->result_summary = $request->result_summary;
@@ -58,7 +61,7 @@ class ReportController extends Controller
         try {
             $report = Report::findOrFail($id);
             if ($report->report_file) {
-                Storage::delete($report->report_file);
+                Storage::disk('public')->delete($report->report_file);
             }
             $report->delete();
             return $this->sendResponse(null, 'Report deleted successfully.');
@@ -74,7 +77,7 @@ class ReportController extends Controller
             if (!$report->report_file) {
                 return $this->sendError('Report file not found.');
             }
-            return Storage::download($report->report_file);
+            return Storage::disk('public')->download($report->report_file);
         } catch (\Exception $e) {
             return $this->sendError('Failed to download report file.', ['error' => $e->getMessage()]);
         }

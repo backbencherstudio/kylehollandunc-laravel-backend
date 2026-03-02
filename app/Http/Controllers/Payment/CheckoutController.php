@@ -84,7 +84,7 @@ class CheckoutController extends Controller
                 $order->items()->create([
                     'type' => 'test',
                     'name' => $meta['test']['title'], // ← FIXED
-                    'quantity' => 1,
+                    'quantity' => $cart->quantity,
                     'price' => $meta['test']['base_price'],
                     'total_price' => $meta['test']['base_price'],
                 ]);

@@ -44,6 +44,7 @@ class RequestController extends Controller
             $makeRequest->organization = $request->organization;
             $makeRequest->test = $request->test;
             $makeRequest->message = $request->message;
+            $makeRequest->status = 'pending';
             $makeRequest->save();
 
             if (Setting::get('test_request') == "true") {
@@ -123,7 +124,7 @@ class RequestController extends Controller
     {
         try {
             $model_request = ModelsRequest::find($id);
-            // dd($request);
+            // dd($request->email);
 
             if (!$model_request) {
                 return $this->sendError('Request not found.');
@@ -140,12 +141,20 @@ class RequestController extends Controller
             $reply->description = $request->description;
             $reply->save();
 
+            // set name on the reply object for the notification
             $reply->user_name = $model_request->name;
-            // Send notification email to the contact's email address
-            Notification::route('mail', $model_request->email)
-                ->notify(new RequestReplyNotification($reply));
 
-            return $this->sendResponse($reply, 'Reply sent successfully.');
+            try {
+                Notification::route('mail', $request->email ? $request->email : $model_request->email)
+                    ->notify(new RequestReplyNotification($reply));
+
+                $model_request->status = 'completed';
+                $model_request->save();
+
+                return $this->sendResponse($reply, 'Reply sent and status updated successfully.');
+            } catch (\Exception $mailEx) {
+                return $this->sendError('Reply saved but failed to send email.', ['error' => $mailEx->getMessage()]);
+            }
         } catch (\Exception $e) {
             return $this->sendError('Failed to send reply.', ['error' => $e->getMessage()]);
         }
