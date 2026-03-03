@@ -51,7 +51,7 @@ class OrderController extends Controller
 
             if ($request->order_status === 'started') {
                 $report = $order->report()->create([
-                    'name' => $order->user->name,
+                    'name' => $order->user->name ?? 'Guest user',
                     'order_id' => $order->id,
                     'test_date' => Date::now()->toDateString(),
                     'progress_status' => 'pending'

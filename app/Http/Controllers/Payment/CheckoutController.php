@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Services\PaymentService;
 use App\Models\Payment\Payment as ModelsPayment;
 use App\Traits\CommonTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
@@ -32,16 +33,33 @@ class CheckoutController extends Controller
                 return response()->json(['error' => 'Validation failed', 'details' => $validated->errors()], 422);
             }
 
-            $cart = Cart::with('sample')->find($request->cart_id);
-            // return $this->sendResponse($cart, 'Cart retrieved successfully.');
+            $user = Auth::guard('sanctum')->user();
+            $guestToken = $request->header('X-Guest-Token');
+
+            // dd($guestToken);
+
+            if ($user) {
+                $cart = Cart::with('sample')
+                    ->where('id', $request->cart_id)
+                    ->where('user_id', $user->id)
+                    ->first();
+            } else {
+                if (!$guestToken) {
+                    return $this->sendError('Guest token missing.', [], 400);
+                }
+
+                $cart = Cart::with('sample')
+                    ->where('id', $request->cart_id)
+                    ->where('guest_token', $guestToken)
+                    ->first();
+            }
 
             if (!$cart) {
                 return $this->sendError('Cart not found.', [], 404);
             }
 
-            $order = Order::create([
+            $orderData = [
                 'order_number' => strtoupper(uniqid()),
-                'user_id' => $request->user()->id,
                 'subtotal' => $cart->price,
                 'total' => $cart->total_price,
                 'shipping_method' => $cart->shipping_method,
@@ -49,7 +67,15 @@ class CheckoutController extends Controller
                 'shipping_address' => $cart->shipping_address,
                 'payment_method' => $request->payment_method,
                 'order_status' => 'pending'
-            ]);
+            ];
+
+            if ($user) {
+                $orderData['user_id'] = $user->id;
+            } else {
+                $orderData['guest_token'] = $guestToken;
+            }
+
+            $order = Order::create($orderData);
 
             if (!$order) {
                 return $this->sendError('Failed to create order.', [], 500);
@@ -121,12 +147,12 @@ class CheckoutController extends Controller
         }
 
 
-        // dd('order:', $order, 'paymentIntentId:', $paymentIntentId);
         try {
             Stripe::setApiKey(config('services.stripe.secret'));
 
             $order = Order::find($request->order_id);
             $paymentIntentId = $request->payment_intent_id;
+        // dd('order:', $order, 'paymentIntentId:', $paymentIntentId);
 
             $intent = PaymentIntent::retrieve($paymentIntentId);
 

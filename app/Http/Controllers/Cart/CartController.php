@@ -7,6 +7,7 @@ use App\Models\Cart\Cart;
 use App\Traits\CommonTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
@@ -23,13 +24,22 @@ class CartController extends Controller
         }
     }
 
-    
 
-    public function cartByUser()
+
+    public function cartByUser(Request $request)
     {
         try {
-            $user = Auth::user();
-            $carts = Cart::where('user_id', $user->id)->with('sample')->latest()->get();
+            $user = Auth::guard('sanctum')->user();
+            // dd($user);
+            $guestToken = $request->header('X-Guest-Token');
+            if ($user) {
+                // dd($user);
+                $carts = Cart::where('user_id', $user->id)->with('sample')->latest()->get();
+            } elseif ($guestToken) {
+                // dd($guestToken);
+                $carts = Cart::where('guest_token', $guestToken)->with('sample')->latest()->get();
+            }
+            // dd($carts);
             return $this->sendResponse($carts, 'Carts retrieved successfully.');
         } catch (\Exception $e) {
             return $this->sendError('Failed to retrieve carts.', ['error' => $e->getMessage()]);
@@ -51,15 +61,26 @@ class CartController extends Controller
                 'meta' => 'array',
             ]);
 
-            $user = $request->user();
+            $user = Auth::guard('sanctum')->user();
+            $guestToken = $request->header('X-Guest-Token');
 
-            $existing_user_carts = Cart::where('user_id', $user->id)->get();
-            if ($existing_user_carts) {
+            if (!$user && !$guestToken) {
+                $guestToken = (string) Str::uuid();
+            }
+
+            if ($user) {
                 Cart::where('user_id', $user->id)->delete();
+            } elseif ($guestToken) {
+                Cart::where('guest_token', $guestToken)->delete();
             }
 
             $cart = new Cart();
-            $cart->user_id = $user->id;
+            if ($user) {
+                $cart->user_id = $user->id;
+            } else {
+                $cart->guest_token = $guestToken;
+            }
+
             $cart->type = $request->type;
             $cart->name = $request->name;
             $cart->quantity = $request->quantity;

@@ -40,6 +40,25 @@ Route::post('/requests', [RequestController::class, 'store']);
 Route::get('/reports/{id}/download', [ReportController::class, 'downloadReport']);
 Route::get('/reports/{id}/details', [ReportController::class, 'reportDetails']);
 
+// PUBLIC (Guest)
+Route::group([], function () {
+
+    // Cart
+    Route::get('/carts', [CartController::class, 'index']);
+    Route::post('/carts', [CartController::class, 'store']);
+    Route::get('/carts-by-user', [CartController::class, 'cartByUser']);
+    Route::post('/carts/{id}/update-shipping', [CartController::class, 'updateShipping']);
+    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
+    Route::post('/carts/sample', [CartController::class, 'cartSample']);
+
+    // Checkout
+    Route::post('/checkout', [CheckoutController::class, 'makePayment']);
+    Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
+    Route::post('/checkout/paypal', [CheckoutController::class, 'completePaypalPayment']);
+
+});
+
+// PRIVATE (Auth)
 Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function () {
     Route::get('user', [AuthController::class, 'getUser']);
     Route::get('users', [AuthController::class, 'getAllUsers']);
@@ -72,12 +91,12 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::post('/profile-settings', [ProfileSettingController::class, 'profileUpdate']);
 
     // Cart
-    Route::get('/carts', [CartController::class, 'index']);
-    Route::get('/carts-by-user', [CartController::class, 'cartByUser']);
-    Route::post('/carts', [CartController::class, 'store']);
-    Route::post('/carts/{id}/update-shipping', [CartController::class, 'updateShipping']);
-    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
-    Route::post('/carts/sample', [CartController::class, 'cartSample']);
+    // Route::get('/carts', [CartController::class, 'index']);
+    // Route::get('/carts-by-user', [CartController::class, 'cartByUser']);
+    // Route::post('/carts', [CartController::class, 'store']);
+    // Route::post('/carts/{id}/update-shipping', [CartController::class, 'updateShipping']);
+    // Route::delete('/carts/{id}', [CartController::class, 'destroy']);
+    // Route::post('/carts/sample', [CartController::class, 'cartSample']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
@@ -89,9 +108,9 @@ Route::group(['middleware' => ['auth:sanctum'], 'role:user, admin'], function ()
     Route::get('/user-orders', [OrderController::class, 'userOrders']);
 
     // Payment
-    Route::post('/checkout', [CheckoutController::class, 'makePayment']);
-    Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
-    Route::post('/checkout/paypal', [CheckoutController::class, 'completePaypalPayment']);
+    // Route::post('/checkout', [CheckoutController::class, 'makePayment']);
+    // Route::post('/checkout/stripe', [CheckoutController::class, 'completeStripePayment']);
+    // Route::post('/checkout/paypal', [CheckoutController::class, 'completePaypalPayment']);
 
     // Reports
     Route::get('/reports', [ReportController::class, 'index']);

@@ -42,7 +42,8 @@ class PaymentService
             'currency' => 'usd',
             'metadata' => [
                 'order_id' => $order->id,
-                'user_id' => $order->user_id,
+                'user_id' => $order->user_id ?? 'guest',
+                'guest_token' => $order->guest_token ?? null,
             ],
         ]);
 
@@ -56,9 +57,11 @@ class PaymentService
             'status' => 'pending',
         ]);
 
-        $user = Auth::user();
-
-        Cart::where('user_id', $user->id)->delete();
+        if ($order->user_id) {
+            Cart::where('user_id', $order->user_id)->delete();
+        } elseif ($order->guest_token) {
+            Cart::where('guest_token', $order->guest_token)->delete();
+        }
 
         return [
             'client_secret' => $intent->client_secret,
@@ -87,7 +90,8 @@ class PaymentService
                     "amount" => [
                         "currency_code" => "USD",
                         "value" => number_format($order->total, 2, '.', '')
-                    ]
+                    ],
+                    "custom_id" => (string) $order->id
                 ]]
             ];
 
@@ -104,9 +108,11 @@ class PaymentService
                 'status' => 'pending',
             ]);
 
-            $user = Auth::user();
-
-            Cart::where('user_id', $user->id)->delete();
+            if ($order->user_id) {
+                Cart::where('user_id', $order->user_id)->delete();
+            } else {
+                Cart::where('guest_token', $order->guest_token)->delete();
+            }
 
             return [
                 'order_id' => $order->id,
