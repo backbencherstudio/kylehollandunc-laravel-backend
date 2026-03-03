@@ -14,7 +14,7 @@ class ReportController extends Controller
 
     public function index()
     {
-        $reports = Report::with('order')->latest()->get();
+        $reports = Report::with('order')->latest()->paginate(10);
         foreach ($reports as $report) {
             $report->report_file = $report->report_file ? Storage::url($report->report_file) : null;
         }
